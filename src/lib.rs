@@ -35,6 +35,7 @@ impl TaskManager {
     pub fn complete_task(&mut self, id: u32) -> Result<(), TaskError> {
         match self.tasks.get_mut(&id) {
             Some(task) => {
+                task.title = task.title.trim().to_string(); // fix
                 task.done = true;
                 Ok(())
             }
