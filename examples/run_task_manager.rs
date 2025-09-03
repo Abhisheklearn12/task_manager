@@ -1,3 +1,4 @@
+ 
 use task_manager::TaskManager;
 
 fn main() {
@@ -21,6 +22,15 @@ fn main() {
     println!("\nAfter completing task {}:", id1);
     for id in &[id1, id2] {
         let task = tm.get_task(*id).unwrap();
+        println!("  {}: {:?}", id, task);
+    }
+        // Delete a task
+    println!("\nDeleting task {}...", id2);
+    tm.delete_task(id2).unwrap();
+
+    // Show tasks after deletion
+    println!("\nTasks after deletion:");
+    for (id, task) in tm.all_tasks() {
         println!("  {}: {:?}", id, task);
     }
 

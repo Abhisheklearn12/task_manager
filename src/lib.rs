@@ -1,3 +1,4 @@
+ 
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -46,8 +47,18 @@ impl TaskManager {
     pub fn get_task(&self, id: u32) -> Result<&Task, TaskError> {
         self.tasks.get(&id).ok_or(TaskError::NotFound)
     }
-}
 
+pub fn delete_task(&mut self, id: u32) -> Result<(), TaskError> {
+    match self.tasks.remove(&id) {
+        Some(_) => Ok(()),
+        None => Err(TaskError::NotFound),
+    }
+}
+    pub fn all_tasks(&self) -> impl Iterator<Item = (&u32, &Task)> {
+        self.tasks.iter()
+    }
+
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -56,10 +67,10 @@ mod tests {
     fn test_add_and_complete_task() {
         let mut tm = TaskManager::new();
         let id = tm.add_task("  Buy milk  ".to_string());
-        
+
         tm.complete_task(id).unwrap();
         let task = tm.get_task(id).unwrap();
-        
+
         assert_eq!(task.title, "Buy milk");
         assert!(task.done);
     }
@@ -69,5 +80,28 @@ mod tests {
         let mut tm = TaskManager::new();
         let result = tm.complete_task(999);
         assert!(matches!(result, Err(_)));
+    }
+
+    #[test]
+    fn test_delete_existing_task() {
+        let mut tm = TaskManager::new();
+        let id = tm.add_task("Buy milk".to_string());
+
+        // delete the task
+        let result = tm.delete_task(id);
+        assert!(result.is_ok());
+
+        // task should no longer exist
+        let task = tm.get_task(id);
+        assert!(task.is_err());
+    }
+
+    #[test]
+    fn test_delete_nonexistent_task() {
+        let mut tm = TaskManager::new();
+
+        // deleting a non-existent task should return Err
+        let result = tm.delete_task(999);
+        assert!(matches!(result, Err(TaskError::NotFound)));
     }
 }
