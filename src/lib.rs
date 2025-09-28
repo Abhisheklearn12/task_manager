@@ -58,6 +58,43 @@ pub fn delete_task(&mut self, id: u32) -> Result<(), TaskError> {
         self.tasks.iter()
     }
 
+
+// --- New Features ---
+
+/// Edit the title of a task
+pub fn edit_task(&mut self, id: u32, new_title: String) -> Result<(), TaskError> {
+    match self.tasks.get_mut(&id) {
+        Some(task) => {
+            task.title = new_title.trim().to_string();
+            Ok(())
+        }
+        None => Err(TaskError::NotFound),
+    }
+}
+
+/// Return only completed tasks
+pub fn completed_tasks(&self) -> Vec<(&u32, &Task)> {
+    self.tasks.iter().filter(|(_, t)| t.done).collect()
+}
+
+/// Return only pending tasks
+pub fn pending_tasks(&self) -> Vec<(&u32, &Task)> {
+    self.tasks.iter().filter(|(_, t)| !t.done).collect()
+}
+
+/// Get counts of tasks
+pub fn task_counts(&self) -> (usize, usize, usize) {
+    let total = self.tasks.len();
+    let completed = self.tasks.values().filter(|t| t.done).count();
+    let pending = total - completed;
+    (total, completed, pending)
+}
+
+/// Clear all completed tasks
+pub fn clear_completed(&mut self) {
+    self.tasks.retain(|_, t| !t.done);
+}
+
 }
 #[cfg(test)]
 mod tests {
@@ -104,4 +141,61 @@ mod tests {
         let result = tm.delete_task(999);
         assert!(matches!(result, Err(TaskError::NotFound)));
     }
+#[test]
+fn test_edit_task() {
+    let mut tm = TaskManager::new();
+    let id = tm.add_task("Old title".to_string());
+
+    tm.edit_task(id, "New title".to_string()).unwrap();
+    let task = tm.get_task(id).unwrap();
+    assert_eq!(task.title, "New title");
+}
+
+#[test]
+fn test_completed_and_pending_tasks() {
+    let mut tm = TaskManager::new();
+    let id1 = tm.add_task("Task 1".to_string());
+    let _id2 = tm.add_task("Task 2".to_string());
+
+    tm.complete_task(id1).unwrap();
+
+    let completed = tm.completed_tasks();
+    let pending = tm.pending_tasks();
+
+    assert_eq!(completed.len(), 1);
+    assert_eq!(pending.len(), 1);
+    assert_eq!(completed[0].1.title, "Task 1");
+    assert_eq!(pending[0].1.title, "Task 2");
+}
+
+#[test]
+fn test_task_counts() {
+    let mut tm = TaskManager::new();
+    let id1 = tm.add_task("Task 1".to_string());
+    tm.add_task("Task 2".to_string());
+
+    tm.complete_task(id1).unwrap();
+
+    let (total, completed, pending) = tm.task_counts();
+    assert_eq!(total, 2);
+    assert_eq!(completed, 1);
+    assert_eq!(pending, 1);
+}
+
+#[test]
+fn test_clear_completed() {
+    let mut tm = TaskManager::new();
+    let id1 = tm.add_task("Task 1".to_string());
+    tm.add_task("Task 2".to_string());
+
+    tm.complete_task(id1).unwrap();
+    tm.clear_completed();
+
+    let (total, completed, pending) = tm.task_counts();
+    assert_eq!(total, 1);
+    assert_eq!(completed, 0);
+    assert_eq!(pending, 1);
+}
+
+
 }
