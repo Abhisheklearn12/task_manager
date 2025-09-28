@@ -105,3 +105,5 @@ mod tests {
         assert!(matches!(result, Err(TaskError::NotFound)));
     }
 }
+
+// Just for testing purpose and experimentation.
